@@ -1,0 +1,8 @@
+functions:
+  GetBookByName:
+    query:
+      name:
+        type: string
+  StoreBook:
+    body:
+      type: Book

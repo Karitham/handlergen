@@ -6,13 +6,15 @@ func mapBasic(f *Structure, pkg string) gen.Template {
 	t := gen.Template{
 		Imports: []gen.Import{
 			{Path: "net/http"},
-			{Path: "encoding/json"},
-			{Path: "strconv"},
 		},
 		PkgName: pkg,
 	}
 
 	for name, fun := range f.Functions {
+		if fun.Body.Type != "" {
+			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "encoding/json"})
+		}
+
 		t.Functions = append(t.Functions, gen.Function{
 			Body:           gen.Body{Type: fun.Body.Type},
 			Name:           name,
