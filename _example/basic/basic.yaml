@@ -1,0 +1,8 @@
+functions:
+  example1:
+    query:
+      user_id:
+        type: int
+    body:
+      type: gen.Template
+      import: github.com/Karitham/handlergen/gen

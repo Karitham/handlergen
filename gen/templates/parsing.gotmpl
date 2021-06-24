@@ -1,0 +1,19 @@
+{{ define "uint" }}
+		query_{{ .Name }} := query.Get("{{ .Name }}")
+		{{ .Name }}64, err := strconv.ParseUint(query_{{ .Name }}, 10, 64)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+		{{ .Name }} := uint({{ .Name }}64){{end}}
+
+{{ define "int" }}
+		query_{{ .Name }} := query.Get("{{ .Name }}")
+		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}{{end}}
+
+{{ define "string" }}
+		{{ .Name }} := query.Get("{{ .Name }}"){{end}}
