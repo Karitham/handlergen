@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"io"
-	"os"
 	"text/template"
-
-	"github.com/davecgh/go-spew/spew"
 )
 
 //go:embed templates/*
@@ -18,8 +15,6 @@ func Execute(t Template, w io.Writer) error {
 	if err != nil {
 		return err
 	}
-
-	spew.Fdump(os.Stderr, t)
 
 	buf := &bytes.Buffer{}
 	if err := tpl.ExecuteTemplate(buf, "main.gotmpl", &t); err != nil {
