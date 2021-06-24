@@ -6,10 +6,51 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Karitham/handlergen/gen"
+	"github.com/go-chi/chi/v5"
 )
 
-func example1(handler func(http.ResponseWriter, *http.Request, uint, gen.Template)) http.HandlerFunc {
+func example3(handler func(w http.ResponseWriter, r *http.Request, page, per_page int, user, api_token string, user_id int)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+
+		query_page := query.Get("page")
+		page, err := strconv.Atoi(query_page)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+
+		query_per_page := query.Get("per_page")
+		per_page, err := strconv.Atoi(query_per_page)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+
+		user := query.Get("user")
+
+		api_token := r.Header.Get("api_token")
+
+		query_user_id := chi.URLParam(r, "user_id")
+		user_id, err := strconv.Atoi(query_user_id)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+
+		handler(
+			w,
+			r,
+			page,
+			per_page,
+			user,
+			api_token,
+			user_id,
+		)
+	}
+}
+
+func example1(handler func(w http.ResponseWriter, r *http.Request, page uint, body gen.Template)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
@@ -36,11 +77,9 @@ func example1(handler func(http.ResponseWriter, *http.Request, uint, gen.Templat
 	}
 }
 
-func example2(handler func(http.ResponseWriter, *http.Request, string, uint, int, int)) http.HandlerFunc {
+func example2(handler func(w http.ResponseWriter, r *http.Request, user_id uint, page, per_page int, user string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		user := query.Get("user")
 
 		query_user_id := query.Get("user_id")
 		user_id64, err := strconv.ParseUint(query_user_id, 10, 64)
@@ -64,13 +103,15 @@ func example2(handler func(http.ResponseWriter, *http.Request, string, uint, int
 			return
 		}
 
+		user := query.Get("user")
+
 		handler(
 			w,
 			r,
-			user,
 			user_id,
 			page,
 			per_page,
+			user,
 		)
 	}
 }

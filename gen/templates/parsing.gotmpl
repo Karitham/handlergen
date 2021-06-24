@@ -15,5 +15,43 @@
 			return
 		}{{end}}
 
+{{ define "int_query" }}
+		query_{{ .Name }} := chi.URLParam(r, "{{ .Name }}")
+		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}{{end}}
+
+{{ define "int_header" }}
+		query_{{ .Name }} := r.Header.Get("{{ .Name }}")
+		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}{{end}}
+
 {{ define "string" }}
 		{{ .Name }} := query.Get("{{ .Name }}"){{end}}
+
+{{ define "string_query" }}
+		{{ .Name }} := chi.URLParam(r, "{{ .Name }}"){{end}}
+
+{{ define "string_header" }}
+		{{ .Name }} := r.Header.Get("{{ .Name }}"){{end}}
+
+{{ define "[]string" }}
+		query_{{ .Name }} := query.Get("{{ .Name }}")
+		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
+		{{end}}
+
+{{ define "[]string_query" }}
+		query_{{ .Name }} := chi.URLParam(r, "{{ .Name }}")
+		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
+		{{end}}
+
+{{ define "[]string_header" }}
+		query_{{ .Name }} := query.Get("{{ .Name }}")
+		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
+		{{end}}
+

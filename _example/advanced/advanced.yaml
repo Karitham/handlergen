@@ -16,3 +16,17 @@ functions:
         type: int
       user:
         type: string
+  example3:
+    path:
+      user_id:
+        type: int
+    header:
+      api_token:
+        type: string
+    query:
+      page:
+        type: int
+      per_page:
+        type: int
+      user:
+        type: string

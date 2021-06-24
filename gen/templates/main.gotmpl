@@ -6,13 +6,20 @@ import (
 {{end}})
 
 {{ range .Functions }}
-func {{ .Name }}(handler func(http.ResponseWriter, *http.Request{{if .HasQueryParams }}{{ range .QueryParams }}, {{ .Type }}{{ end }}{{ end }}{{if .HasBody }}, {{ .Body.Type }}{{ end }})) http.HandlerFunc {
+func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request{{if .HasQueryParams }}{{ range .QueryParams }}, {{ .Name }} {{ StripTypeSuffix .Type }}{{ end }}{{ end }}{{if .HasBody }}, body {{ .Body.Type }}{{ end }})) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		{{ if .HasQueryParams }}query := r.URL.Query()
 		{{ range .QueryParams }}
 			{{ if eq .Type "int"}}{{ template "int" . }}
-			{{ else if eq .Type "string" }}{{ template "string" . }}
+			{{ else if eq .Type "int_query"}}{{ template "int_query" . }}
+			{{ else if eq .Type "int_header"}}{{ template "int_header" . }}
 			{{ else if eq .Type "uint" }}{{ template "uint" . }}
+			{{ else if eq .Type "string" }}{{ template "string" . }}
+			{{ else if eq .Type "string_query" }}{{ template "string_query" . }}
+			{{ else if eq .Type "string_header" }}{{ template "string_header" . }}
+			{{ else if eq .Type "[]string" }}{{ template "[]string" . }}
+			{{ else if eq .Type "[]string_query" }}{{ template "[]string" . }}
+			{{ else if eq .Type "[]string_header" }}{{ template "[]string_header" . }}
 		{{ end }}
 		{{ end }}{{ end }}
 		{{ if .HasBody }}var body {{ .Body.Type }}
@@ -25,7 +32,7 @@ func {{ .Name }}(handler func(http.ResponseWriter, *http.Request{{if .HasQueryPa
 			w,
 			r,
 			{{ if .HasQueryParams }}{{ range .QueryParams }}{{ .Name }},
-			{{ end }}{{ end }}{{ if .HasBody }}body,{{end}}
-		)
+			{{ end }}{{ end }}{{ if .HasBody }}body,
+	{{end}})
 	}
 }{{ end }}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"io"
+	"strings"
 	"text/template"
 )
 
@@ -11,7 +12,10 @@ import (
 var tmpl embed.FS
 
 func Execute(t Template, w io.Writer) error {
-	tpl, err := template.New("main.gotmpl").ParseFS(tmpl, "templates/*.gotmpl")
+	templ := template.New("main.gotmpl")
+	templ.Funcs(template.FuncMap{"StripTypeSuffix": StripTypeSuffix})
+
+	tpl, err := templ.ParseFS(tmpl, "templates/*.gotmpl")
 	if err != nil {
 		return err
 	}
@@ -21,7 +25,14 @@ func Execute(t Template, w io.Writer) error {
 		return err
 	}
 
-	return Format(buf, w)
+	if err := Format(buf, w); err != nil {
+		return err
+	}
+	return nil
+}
+
+func StripTypeSuffix(s string) string {
+	return strings.SplitN(s, "_", 2)[0]
 }
 
 type Template struct {
