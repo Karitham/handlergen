@@ -1,14 +1,32 @@
-# handlergen
 
-## Install
+# HandlerGen
 
-With the go toolchain, run
+A go net/http HandlerFunc code generator.
+Parses all your args and give them to you as function arguments,
+which you can then validate and use.
 
-```sh
+
+## Features
+
+Multiple arguments format supported:
+- Query URL
+- HTTP headers
+- Request Body
+- URL Path, using go-chi
+
+Fully net/http complient
+
+Codegen, no slow downs!
+
+  
+## Installation 
+
+Install Handlergen with the go toolchain
+
+```bash 
 go install github.com/Karitham/handlergen@latest
 ```
-
-## Usage
+## Usage/Examples
 
 Describe the function you want
 
@@ -29,8 +47,22 @@ and codegen a httphandler
 handlergen -file _example/basic/basic.yaml > _example/basic/generated.go
 ```
 
-The tool also works with open API, see the petstore example.
+**[View more examples](_example)**
+## Documentation
 
-When using path, the program uses go-chi by default
+| flag | default value | description |
+| ---- | --------- | ----------- |
+| file | handlers.yaml  | handlers gen config file |
+| format  | handlergen  | input file format, use `openapi` for an open api file |
+| pkg  | handlers  | package name |
 
-**[More examples here](_example)**
+## Authors
+
+- [@Karitham](https://www.github.com/Karitham)
+
+  
+## License
+
+[ISC](https://choosealicense.com/licenses/isc/)
+
+  
