@@ -8,40 +8,36 @@ import (
 	"strings"
 )
 
-func GetUserLogin(handler func(w http.ResponseWriter, r *http.Request, Username, Password string)) http.HandlerFunc {
+type Handlers interface {
+	GetPetFindByTags(http.ResponseWriter, *http.Request, []string)
+	PostPetByPetId(http.ResponseWriter, *http.Request, int, string, string)
+	DeletePetByPetId(http.ResponseWriter, *http.Request, string, int)
+	GetPetByPetId(http.ResponseWriter, *http.Request, int)
+	GetUserByUsername(http.ResponseWriter, *http.Request, string)
+	PutUserByUsername(http.ResponseWriter, *http.Request, string)
+	DeleteUserByUsername(http.ResponseWriter, *http.Request, string)
+	GetPetFindByStatus(http.ResponseWriter, *http.Request, string)
+	PostPetByPetIdUploadImage(http.ResponseWriter, *http.Request, int, string)
+	GetStoreOrderByOrderId(http.ResponseWriter, *http.Request, int)
+	DeleteStoreOrderByOrderId(http.ResponseWriter, *http.Request, int)
+	GetUserLogin(http.ResponseWriter, *http.Request, string, string)
+}
+
+func GetPetFindByTags(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		Username := query.Get("username")
-		Password := query.Get("password")
+		queryTags := query.Get("tags")
+		Tags := strings.Split(queryTags, ",")
 
-		handler(
+		h.GetPetFindByTags(
 			w,
 			r,
-			Username,
-			Password,
+			Tags,
 		)
 	}
 }
 
-func GetPetByPetId(handler func(w http.ResponseWriter, r *http.Request, PetId int)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		queryPetId := chi.URLParam(r, "petId")
-		PetId, err := strconv.Atoi(queryPetId)
-		if err != nil {
-			http.Error(w, "invalid query", 400)
-			return
-		}
-
-		handler(
-			w,
-			r,
-			PetId,
-		)
-	}
-}
-
-func PostPetByPetId(handler func(w http.ResponseWriter, r *http.Request, PetId int, Name, Status string)) http.HandlerFunc {
+func PostPetByPetId(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPetId := chi.URLParam(r, "petId")
@@ -53,7 +49,7 @@ func PostPetByPetId(handler func(w http.ResponseWriter, r *http.Request, PetId i
 		Name := query.Get("name")
 		Status := query.Get("status")
 
-		handler(
+		h.PostPetByPetId(
 			w,
 			r,
 			PetId,
@@ -63,7 +59,7 @@ func PostPetByPetId(handler func(w http.ResponseWriter, r *http.Request, PetId i
 	}
 }
 
-func DeletePetByPetId(handler func(w http.ResponseWriter, r *http.Request, ApiKey string, PetId int)) http.HandlerFunc {
+func DeletePetByPetId(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		ApiKey := r.Header.Get("api_key")
@@ -74,7 +70,7 @@ func DeletePetByPetId(handler func(w http.ResponseWriter, r *http.Request, ApiKe
 			return
 		}
 
-		handler(
+		h.DeletePetByPetId(
 			w,
 			r,
 			ApiKey,
@@ -83,7 +79,77 @@ func DeletePetByPetId(handler func(w http.ResponseWriter, r *http.Request, ApiKe
 	}
 }
 
-func PostPetByPetIdUploadImage(handler func(w http.ResponseWriter, r *http.Request, PetId int, AdditionalMetadata string)) http.HandlerFunc {
+func GetPetByPetId(h Handlers) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		queryPetId := chi.URLParam(r, "petId")
+		PetId, err := strconv.Atoi(queryPetId)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+
+		h.GetPetByPetId(
+			w,
+			r,
+			PetId,
+		)
+	}
+}
+
+func GetUserByUsername(h Handlers) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		Username := chi.URLParam(r, "username")
+
+		h.GetUserByUsername(
+			w,
+			r,
+			Username,
+		)
+	}
+}
+
+func PutUserByUsername(h Handlers) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		Username := chi.URLParam(r, "username")
+
+		h.PutUserByUsername(
+			w,
+			r,
+			Username,
+		)
+	}
+}
+
+func DeleteUserByUsername(h Handlers) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		Username := chi.URLParam(r, "username")
+
+		h.DeleteUserByUsername(
+			w,
+			r,
+			Username,
+		)
+	}
+}
+
+func GetPetFindByStatus(h Handlers) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		Status := query.Get("status")
+
+		h.GetPetFindByStatus(
+			w,
+			r,
+			Status,
+		)
+	}
+}
+
+func PostPetByPetIdUploadImage(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPetId := chi.URLParam(r, "petId")
@@ -94,7 +160,7 @@ func PostPetByPetIdUploadImage(handler func(w http.ResponseWriter, r *http.Reque
 		}
 		AdditionalMetadata := query.Get("additionalMetadata")
 
-		handler(
+		h.PostPetByPetIdUploadImage(
 			w,
 			r,
 			PetId,
@@ -103,7 +169,7 @@ func PostPetByPetIdUploadImage(handler func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func GetStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Request, OrderId int)) http.HandlerFunc {
+func GetStoreOrderByOrderId(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryOrderId := chi.URLParam(r, "orderId")
@@ -113,7 +179,7 @@ func GetStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Request,
 			return
 		}
 
-		handler(
+		h.GetStoreOrderByOrderId(
 			w,
 			r,
 			OrderId,
@@ -121,7 +187,7 @@ func GetStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-func DeleteStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Request, OrderId int)) http.HandlerFunc {
+func DeleteStoreOrderByOrderId(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryOrderId := chi.URLParam(r, "orderId")
@@ -131,7 +197,7 @@ func DeleteStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		handler(
+		h.DeleteStoreOrderByOrderId(
 			w,
 			r,
 			OrderId,
@@ -139,68 +205,17 @@ func DeleteStoreOrderByOrderId(handler func(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func GetUserByUsername(handler func(w http.ResponseWriter, r *http.Request, Username string)) http.HandlerFunc {
+func GetUserLogin(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		Username := chi.URLParam(r, "username")
+		Username := query.Get("username")
+		Password := query.Get("password")
 
-		handler(
+		h.GetUserLogin(
 			w,
 			r,
 			Username,
-		)
-	}
-}
-
-func PutUserByUsername(handler func(w http.ResponseWriter, r *http.Request, Username string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		Username := chi.URLParam(r, "username")
-
-		handler(
-			w,
-			r,
-			Username,
-		)
-	}
-}
-
-func DeleteUserByUsername(handler func(w http.ResponseWriter, r *http.Request, Username string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		Username := chi.URLParam(r, "username")
-
-		handler(
-			w,
-			r,
-			Username,
-		)
-	}
-}
-
-func GetPetFindByStatus(handler func(w http.ResponseWriter, r *http.Request, Status string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		Status := query.Get("status")
-
-		handler(
-			w,
-			r,
-			Status,
-		)
-	}
-}
-
-func GetPetFindByTags(handler func(w http.ResponseWriter, r *http.Request, Tags []string)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		queryTags := query.Get("tags")
-		Tags := strings.Split(queryTags, ",")
-
-		handler(
-			w,
-			r,
-			Tags,
+			Password,
 		)
 	}
 }

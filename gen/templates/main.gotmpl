@@ -5,13 +5,19 @@ import (
 	{{range .Imports}}"{{.Path}}"	
 {{end}})
 
+type {{ SnakeToCamel .PkgName }} interface {
+	{{ range .Functions }}
+	{{ .Name }}(http.ResponseWriter, *http.Request {{if .HasQueryParams }}
+	{{- range .QueryParams -}}, {{ StripTypeSuffix .Type }}
+	{{- end -}}
+	{{- end -}}
+	{{- if .HasBody -}}, {{ .Body.Type }}
+	{{- end -}})
+	{{- end -}}
+}
+
 {{ range .Functions }}
-func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request {{if .HasQueryParams }}
-	{{- range .QueryParams -}}, {{ SnakeToCamel .Name }} {{ StripTypeSuffix .Type }}
-	{{- end -}}
-	{{- end -}}
-	{{- if .HasBody -}}, body {{ .Body.Type }}
-	{{- end -}})) http.HandlerFunc {
+func {{ SnakeToCamel .Name }}(h {{ SnakeToCamel $.PkgName }}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		{{ if .HasQueryParams -}} query := r.URL.Query()
 		{{ range .QueryParams -}}
@@ -34,7 +40,7 @@ func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request {{if .HasQu
 			return
 		}
 		{{ end }}
-		handler(
+		h.{{ .Name }}(
 			w,
 			r,
 			{{ if .HasQueryParams }}{{ range .QueryParams }}{{ SnakeToCamel .Name }},

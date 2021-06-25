@@ -3,14 +3,19 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"github.com/Karitham/handlergen/gen"
 	"github.com/go-chi/chi/v5"
+	"net/http"
+	"strconv"
 )
 
-func example1(handler func(w http.ResponseWriter, r *http.Request, Page uint, body gen.Template)) http.HandlerFunc {
+type Handlers interface {
+	example1(http.ResponseWriter, *http.Request, uint, gen.Template)
+	example2(http.ResponseWriter, *http.Request, string, uint, int, int)
+	example3(http.ResponseWriter, *http.Request, int, int, string, string, int)
+}
+
+func Example1(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPage := query.Get("page")
@@ -27,7 +32,7 @@ func example1(handler func(w http.ResponseWriter, r *http.Request, Page uint, bo
 			return
 		}
 
-		handler(
+		h.example1(
 			w,
 			r,
 			Page,
@@ -36,7 +41,7 @@ func example1(handler func(w http.ResponseWriter, r *http.Request, Page uint, bo
 	}
 }
 
-func example2(handler func(w http.ResponseWriter, r *http.Request, User string, UserId uint, Page, PerPage int)) http.HandlerFunc {
+func Example2(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		User := query.Get("user")
@@ -60,7 +65,7 @@ func example2(handler func(w http.ResponseWriter, r *http.Request, User string, 
 			return
 		}
 
-		handler(
+		h.example2(
 			w,
 			r,
 			User,
@@ -71,7 +76,7 @@ func example2(handler func(w http.ResponseWriter, r *http.Request, User string, 
 	}
 }
 
-func example3(handler func(w http.ResponseWriter, r *http.Request, Page, PerPage int, User, ApiToken string, UserId int)) http.HandlerFunc {
+func Example3(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPage := query.Get("page")
@@ -95,7 +100,7 @@ func example3(handler func(w http.ResponseWriter, r *http.Request, Page, PerPage
 			return
 		}
 
-		handler(
+		h.example3(
 			w,
 			r,
 			Page,

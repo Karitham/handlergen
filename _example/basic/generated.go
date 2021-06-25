@@ -3,13 +3,16 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/Karitham/handlergen/gen"
 	"net/http"
 	"strconv"
-
-	"github.com/Karitham/handlergen/gen"
 )
 
-func example1(handler func(w http.ResponseWriter, r *http.Request, UserId int, body gen.Template)) http.HandlerFunc {
+type Handlers interface {
+	example1(http.ResponseWriter, *http.Request, int, gen.Template)
+}
+
+func Example1(h Handlers) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryUserId := query.Get("user_id")
@@ -25,7 +28,7 @@ func example1(handler func(w http.ResponseWriter, r *http.Request, UserId int, b
 			return
 		}
 
-		handler(
+		h.example1(
 			w,
 			r,
 			UserId,

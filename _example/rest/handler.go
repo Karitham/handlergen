@@ -6,12 +6,17 @@ import (
 	"net/http"
 )
 
-func GetBookByName(handler func(w http.ResponseWriter, r *http.Request, Name string)) http.HandlerFunc {
+type Main interface {
+	GetBookByName(http.ResponseWriter, *http.Request, string)
+	StoreBook(http.ResponseWriter, *http.Request, Book)
+}
+
+func GetBookByName(h Main) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		Name := query.Get("name")
 
-		handler(
+		h.GetBookByName(
 			w,
 			r,
 			Name,
@@ -19,7 +24,7 @@ func GetBookByName(handler func(w http.ResponseWriter, r *http.Request, Name str
 	}
 }
 
-func StoreBook(handler func(w http.ResponseWriter, r *http.Request, body Book)) http.HandlerFunc {
+func StoreBook(h Main) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body Book
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -27,7 +32,7 @@ func StoreBook(handler func(w http.ResponseWriter, r *http.Request, body Book)) 
 			return
 		}
 
-		handler(
+		h.StoreBook(
 			w,
 			r,
 			body,
