@@ -6,61 +6,20 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Karitham/handlergen/gen"
 	"github.com/go-chi/chi/v5"
 )
 
-func example3(handler func(w http.ResponseWriter, r *http.Request, page, per_page int, user, api_token string, user_id int)) http.HandlerFunc {
+func example1(handler func(w http.ResponseWriter, r *http.Request, Page uint, body gen.Template)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		query_page := query.Get("page")
-		page, err := strconv.Atoi(query_page)
+		queryPage := query.Get("page")
+		Page64, err := strconv.ParseUint(queryPage, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
 		}
-
-		query_per_page := query.Get("per_page")
-		per_page, err := strconv.Atoi(query_per_page)
-		if err != nil {
-			http.Error(w, "invalid query", 400)
-			return
-		}
-
-		user := query.Get("user")
-
-		api_token := r.Header.Get("api_token")
-
-		query_user_id := chi.URLParam(r, "user_id")
-		user_id, err := strconv.Atoi(query_user_id)
-		if err != nil {
-			http.Error(w, "invalid query", 400)
-			return
-		}
-
-		handler(
-			w,
-			r,
-			page,
-			per_page,
-			user,
-			api_token,
-			user_id,
-		)
-	}
-}
-
-func example1(handler func(w http.ResponseWriter, r *http.Request, page uint, body gen.Template)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
-		query_page := query.Get("page")
-		page64, err := strconv.ParseUint(query_page, 10, 64)
-		if err != nil {
-			http.Error(w, "invalid query", 400)
-			return
-		}
-		page := uint(page64)
+		Page := uint(Page64)
 
 		var body gen.Template
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -71,47 +30,79 @@ func example1(handler func(w http.ResponseWriter, r *http.Request, page uint, bo
 		handler(
 			w,
 			r,
-			page,
+			Page,
 			body,
 		)
 	}
 }
 
-func example2(handler func(w http.ResponseWriter, r *http.Request, user_id uint, page, per_page int, user string)) http.HandlerFunc {
+func example2(handler func(w http.ResponseWriter, r *http.Request, User string, UserId uint, Page, PerPage int)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		query_user_id := query.Get("user_id")
-		user_id64, err := strconv.ParseUint(query_user_id, 10, 64)
+		User := query.Get("user")
+		queryUserId := query.Get("user_id")
+		UserId64, err := strconv.ParseUint(queryUserId, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
 		}
-		user_id := uint(user_id64)
-
-		query_page := query.Get("page")
-		page, err := strconv.Atoi(query_page)
+		UserId := uint(UserId64)
+		queryPage := query.Get("page")
+		Page, err := strconv.Atoi(queryPage)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
 		}
-
-		query_per_page := query.Get("per_page")
-		per_page, err := strconv.Atoi(query_per_page)
+		queryPerPage := query.Get("per_page")
+		PerPage, err := strconv.Atoi(queryPerPage)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
 		}
-
-		user := query.Get("user")
 
 		handler(
 			w,
 			r,
-			user_id,
-			page,
-			per_page,
-			user,
+			User,
+			UserId,
+			Page,
+			PerPage,
+		)
+	}
+}
+
+func example3(handler func(w http.ResponseWriter, r *http.Request, Page, PerPage int, User, ApiToken string, UserId int)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		queryPage := query.Get("page")
+		Page, err := strconv.Atoi(queryPage)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+		queryPerPage := query.Get("per_page")
+		PerPage, err := strconv.Atoi(queryPerPage)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+		User := query.Get("user")
+		ApiToken := r.Header.Get("api_token")
+		queryUserId := chi.URLParam(r, "user_id")
+		UserId, err := strconv.Atoi(queryUserId)
+		if err != nil {
+			http.Error(w, "invalid query", 400)
+			return
+		}
+
+		handler(
+			w,
+			r,
+			Page,
+			PerPage,
+			User,
+			ApiToken,
+			UserId,
 		)
 	}
 }

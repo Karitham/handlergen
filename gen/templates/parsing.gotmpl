@@ -1,57 +1,64 @@
-{{ define "uint" }}
-		query_{{ .Name }} := query.Get("{{ .Name }}")
-		{{ .Name }}64, err := strconv.ParseUint(query_{{ .Name }}, 10, 64)
+{{- define "uint" -}}
+		query{{ SnakeToCamel .Name }} := query.Get("{{ .Name }}")
+		{{ SnakeToCamel .Name }}64, err := strconv.ParseUint(query{{ SnakeToCamel .Name }}, 10, 64)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
 		}
-		{{ .Name }} := uint({{ .Name }}64){{end}}
+		{{ SnakeToCamel .Name }} := uint({{ SnakeToCamel .Name }}64)
+{{- end -}}
 
-{{ define "int" }}
-		query_{{ .Name }} := query.Get("{{ .Name }}")
-		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+{{- define "int" -}}
+		query{{ SnakeToCamel .Name }} := query.Get("{{ .Name }}")
+		{{ SnakeToCamel .Name }}, err := strconv.Atoi(query{{ SnakeToCamel .Name }})
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
-		}{{end}}
+		}
+{{- end -}}
 
-{{ define "int_query" }}
-		query_{{ .Name }} := chi.URLParam(r, "{{ .Name }}")
-		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+{{- define "int_query" -}}
+		query{{ SnakeToCamel .Name }} := chi.URLParam(r, "{{ .Name }}")
+		{{ SnakeToCamel .Name }}, err := strconv.Atoi(query{{ SnakeToCamel .Name }})
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
-		}{{end}}
+		}
+{{- end -}}
 
-{{ define "int_header" }}
-		query_{{ .Name }} := r.Header.Get("{{ .Name }}")
-		{{ .Name }}, err := strconv.Atoi(query_{{ .Name }})
+{{- define "int_header" -}}
+		query{{ SnakeToCamel .Name }} := r.Header.Get("{{ .Name }}")
+		{{ SnakeToCamel .Name }}, err := strconv.Atoi(query{{ SnakeToCamel .Name }})
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
-		}{{end}}
+		}
+{{- end -}}
 
-{{ define "string" }}
-		{{ .Name }} := query.Get("{{ .Name }}"){{end}}
+{{- define "string" -}}
+		{{ SnakeToCamel .Name }} := query.Get("{{ .Name }}")
+{{- end -}}
 
-{{ define "string_query" }}
-		{{ .Name }} := chi.URLParam(r, "{{ .Name }}"){{end}}
+{{- define "string_query" -}}
+		{{ SnakeToCamel .Name }} := chi.URLParam(r, "{{ .Name }}")
+{{- end -}}
 
-{{ define "string_header" }}
-		{{ .Name }} := r.Header.Get("{{ .Name }}"){{end}}
+{{- define "string_header" -}}
+		{{ SnakeToCamel .Name }} := r.Header.Get("{{ .Name }}")
+{{- end -}}
 
-{{ define "[]string" }}
-		query_{{ .Name }} := query.Get("{{ .Name }}")
-		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
-		{{end}}
+{{- define "[]string" -}}
+		query{{ SnakeToCamel .Name }} := query.Get("{{ .Name }}")
+		{{ SnakeToCamel .Name }} := strings.Split(query{{ SnakeToCamel .Name }}, ",")
+{{- end -}}
 
-{{ define "[]string_query" }}
-		query_{{ .Name }} := chi.URLParam(r, "{{ .Name }}")
-		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
-		{{end}}
+{{- define "[]string_query" -}}
+		query{{ SnakeToCamel .Name }} := chi.URLParam(r, "{{ .Name }}")
+		{{ SnakeToCamel .Name }} := strings.Split(query{{ SnakeToCamel .Name }}, ",")
+{{- end -}}
 
-{{ define "[]string_header" }}
-		query_{{ .Name }} := query.Get("{{ .Name }}")
-		{{ .Name }} := strings.Split(query_{{ .Name }}, ",")
-		{{end}}
+{{- define "[]string_header" -}}
+		query{{ SnakeToCamel .Name }} := query.Get("{{ .Name }}")
+		{{ SnakeToCamel .Name }} := strings.Split(query{{ SnakeToCamel .Name }}, ",")
+{{- end -}}
 

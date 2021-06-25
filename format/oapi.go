@@ -58,13 +58,21 @@ func mapOapi(f *Oapi, pkg string) gen.Template {
 					})
 				case "body":
 					gf.Body = gen.Body{
-						Type: parseTypesQuery(&t, param.Schema.Type),
+						Type: param.Schema.Type,
 					}
 					t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "encoding/json"})
+					if gf.Body.Type != "" {
+						t.Imports = appendOnceImports(t.Imports, gen.Import{Path: gf.Body.Type})
+					}
 				}
 			}
 			gf.HasBody = gf.Body.Type != ""
 			gf.HasQueryParams = len(gf.QueryParams) > 0
+
+			if !gf.HasBody && !gf.HasQueryParams {
+				continue
+			}
+
 			t.Functions = append(t.Functions, gf)
 		}
 	}
@@ -134,11 +142,14 @@ func parseTypesHeader(t *gen.Template, typ string) string {
 	return typ
 }
 
-func appendOnceImports(imps []gen.Import, i gen.Import) []gen.Import {
+func appendOnceImports(imps []gen.Import, i ...gen.Import) []gen.Import {
 	for _, s := range imps {
-		if s == i {
-			return imps
+		for _, j := range i {
+			if s == j {
+				continue
+			}
+			imps = append(imps, j)
 		}
 	}
-	return append(imps, i)
+	return imps
 }

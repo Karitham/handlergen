@@ -1,6 +1,10 @@
 package format
 
-import "github.com/Karitham/handlergen/gen"
+import (
+	"log"
+
+	"github.com/Karitham/handlergen/gen"
+)
 
 func mapBasic(f *Structure, pkg string) gen.Template {
 	t := gen.Template{
@@ -13,15 +17,22 @@ func mapBasic(f *Structure, pkg string) gen.Template {
 	for name, fun := range f.Functions {
 		if fun.Body.Type != "" {
 			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "encoding/json"})
+			if fun.Body.Import != "" {
+				t.Imports = appendOnceImports(t.Imports, gen.Import{Path: fun.Body.Import})
+			}
 		}
 
-		t.Functions = append(t.Functions, gen.Function{
+		gf := gen.Function{
 			Body:           gen.Body{Type: fun.Body.Type},
 			Name:           name,
 			QueryParams:    queryParamsFromQuery(&t, fun),
 			HasQueryParams: len(fun.Query) > 0,
 			HasBody:        fun.Body.Type != "",
-		})
+		}
+		if !gf.HasBody && !gf.HasQueryParams {
+			continue
+		}
+		t.Functions = append(t.Functions, gf)
 	}
 
 	return t
@@ -36,7 +47,8 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesQuery(t, p.Type),
 		})
 		if p.Import != "" {
-			t.Imports = append(t.Imports, gen.Import{Path: f.Body.Import})
+			log.Println(p.Import)
+			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
 		}
 	}
 	for n, p := range f.Header {
@@ -45,7 +57,7 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesHeader(t, p.Type),
 		})
 		if p.Import != "" {
-			t.Imports = append(t.Imports, gen.Import{Path: f.Body.Import})
+			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
 		}
 	}
 	for n, p := range f.Path {
@@ -54,7 +66,7 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesPath(t, p.Type),
 		})
 		if p.Import != "" {
-			t.Imports = append(t.Imports, gen.Import{Path: f.Body.Import})
+			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
 		}
 	}
 	return q

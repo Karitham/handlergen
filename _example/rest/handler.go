@@ -6,16 +6,15 @@ import (
 	"net/http"
 )
 
-func GetBookByName(handler func(w http.ResponseWriter, r *http.Request, name string)) http.HandlerFunc {
+func GetBookByName(handler func(w http.ResponseWriter, r *http.Request, Name string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		name := query.Get("name")
+		Name := query.Get("name")
 
 		handler(
 			w,
 			r,
-			name,
+			Name,
 		)
 	}
 }

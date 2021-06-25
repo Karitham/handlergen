@@ -6,10 +6,15 @@ import (
 {{end}})
 
 {{ range .Functions }}
-func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request{{if .HasQueryParams }}{{ range .QueryParams }}, {{ .Name }} {{ StripTypeSuffix .Type }}{{ end }}{{ end }}{{if .HasBody }}, body {{ .Body.Type }}{{ end }})) http.HandlerFunc {
+func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request {{if .HasQueryParams }}
+	{{- range .QueryParams -}}, {{ SnakeToCamel .Name }} {{ StripTypeSuffix .Type }}
+	{{- end -}}
+	{{- end -}}
+	{{- if .HasBody -}}, body {{ .Body.Type }}
+	{{- end -}})) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		{{ if .HasQueryParams }}query := r.URL.Query()
-		{{ range .QueryParams }}
+		{{ if .HasQueryParams -}} query := r.URL.Query()
+		{{ range .QueryParams -}}
 			{{ if eq .Type "int"}}{{ template "int" . }}
 			{{ else if eq .Type "int_query"}}{{ template "int_query" . }}
 			{{ else if eq .Type "int_header"}}{{ template "int_header" . }}
@@ -20,8 +25,9 @@ func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request{{if .HasQue
 			{{ else if eq .Type "[]string" }}{{ template "[]string" . }}
 			{{ else if eq .Type "[]string_query" }}{{ template "[]string" . }}
 			{{ else if eq .Type "[]string_header" }}{{ template "[]string_header" . }}
+		{{- end -}}
+		{{- end }}
 		{{ end }}
-		{{ end }}{{ end }}
 		{{ if .HasBody }}var body {{ .Body.Type }}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "invalid body", 400)
@@ -31,8 +37,10 @@ func {{ .Name }}(handler func(w http.ResponseWriter, r *http.Request{{if .HasQue
 		handler(
 			w,
 			r,
-			{{ if .HasQueryParams }}{{ range .QueryParams }}{{ .Name }},
+			{{ if .HasQueryParams }}{{ range .QueryParams }}{{ SnakeToCamel .Name }},
 			{{ end }}{{ end }}{{ if .HasBody }}body,
-	{{end}})
+	{{ end -}}
+		)
 	}
-}{{ end }}
+}
+{{- end -}}

@@ -13,7 +13,10 @@ var tmpl embed.FS
 
 func Execute(t Template, w io.Writer) error {
 	templ := template.New("main.gotmpl")
-	templ.Funcs(template.FuncMap{"StripTypeSuffix": StripTypeSuffix})
+	templ.Funcs(template.FuncMap{
+		"StripTypeSuffix": StripTypeSuffix,
+		"SnakeToCamel":    SnakeToCamel,
+	})
 
 	tpl, err := templ.ParseFS(tmpl, "templates/*.gotmpl")
 	if err != nil {
@@ -25,6 +28,7 @@ func Execute(t Template, w io.Writer) error {
 		return err
 	}
 
+	// buf.WriteTo(w)
 	if err := Format(buf, w); err != nil {
 		return err
 	}
@@ -33,6 +37,14 @@ func Execute(t Template, w io.Writer) error {
 
 func StripTypeSuffix(s string) string {
 	return strings.SplitN(s, "_", 2)[0]
+}
+
+func SnakeToCamel(s string) string {
+	b := strings.Builder{}
+	for _, sub := range strings.Split(s, "_") {
+		b.WriteString(strings.Title(sub))
+	}
+	return b.String()
 }
 
 type Template struct {

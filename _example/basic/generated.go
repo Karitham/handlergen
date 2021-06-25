@@ -9,12 +9,11 @@ import (
 	"github.com/Karitham/handlergen/gen"
 )
 
-func example1(handler func(http.ResponseWriter, *http.Request, int, gen.Template)) http.HandlerFunc {
+func example1(handler func(w http.ResponseWriter, r *http.Request, UserId int, body gen.Template)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		query_user_id := query.Get("user_id")
-		user_id, err := strconv.Atoi(query_user_id)
+		queryUserId := query.Get("user_id")
+		UserId, err := strconv.Atoi(queryUserId)
 		if err != nil {
 			http.Error(w, "invalid query", 400)
 			return
@@ -29,7 +28,7 @@ func example1(handler func(http.ResponseWriter, *http.Request, int, gen.Template
 		handler(
 			w,
 			r,
-			user_id,
+			UserId,
 			body,
 		)
 	}
