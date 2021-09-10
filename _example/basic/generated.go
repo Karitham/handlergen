@@ -3,31 +3,45 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Karitham/handlergen/gen"
 	"net/http"
 	"strconv"
+
+	"github.com/Karitham/handlergen/gen"
 )
+
+type errorHandler = func(w http.ResponseWriter, r *http.Request, err error)
+
+var defaultErrHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, "invalid payload", 400)
+}
 
 type Handlers interface {
 	example1(http.ResponseWriter, *http.Request, int, gen.Template)
 }
 
-func Example1(h Handlers) http.HandlerFunc {
+func Example1(h Handlers, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryUserId := query.Get("user_id")
 		UserId, err := strconv.Atoi(queryUserId)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 
 		var body gen.Template
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			http.Error(w, "invalid body", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
-
 		h.example1(
 			w,
 			r,

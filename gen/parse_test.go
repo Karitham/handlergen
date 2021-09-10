@@ -6,13 +6,16 @@ import (
 )
 
 func TestExecute(t *testing.T) {
-	type args struct {
-		t Template
-	}
-	type T struct {
-		name string
-		args args
-	}
+	type (
+		args struct {
+			t Template
+		}
+		T struct {
+			name string
+			args args
+		}
+	)
+
 	tests := []T{
 		{
 			name: "basic test",

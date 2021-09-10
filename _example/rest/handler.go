@@ -6,12 +6,18 @@ import (
 	"net/http"
 )
 
+type errorHandler = func(w http.ResponseWriter, r *http.Request, err error)
+
+var defaultErrHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, "invalid payload", 400)
+}
+
 type Main interface {
 	GetBookByName(http.ResponseWriter, *http.Request, string)
 	StoreBook(http.ResponseWriter, *http.Request, Book)
 }
 
-func GetBookByName(h Main) http.HandlerFunc {
+func GetBookByName(h Main, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		Name := query.Get("name")
@@ -24,14 +30,17 @@ func GetBookByName(h Main) http.HandlerFunc {
 	}
 }
 
-func StoreBook(h Main) http.HandlerFunc {
+func StoreBook(h Main, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body Book
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			http.Error(w, "invalid body", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
-
 		h.StoreBook(
 			w,
 			r,

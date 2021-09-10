@@ -3,47 +3,45 @@ package format
 import (
 	"io"
 
+	"github.com/Karitham/handlergen/format/hgen"
+	"github.com/Karitham/handlergen/format/openapi"
 	"github.com/Karitham/handlergen/gen"
-	"gopkg.in/yaml.v3"
 )
 
+var drivers = map[string]func(r io.Reader) (gen.Template, error){
+	"openapi":    openapi.Parse,
+	"":           hgen.Parse,
+	"handlergen": hgen.Parse,
+	"hgen":       hgen.Parse,
+}
+
 func Parse(r io.Reader, format string, pkg string) (gen.Template, error) {
-	t := gen.Template{}
-	switch format {
-	case "", "handlergen":
-		s := &Structure{}
-		err := yaml.NewDecoder(r).Decode(s)
-		if err != nil {
-			return gen.Template{}, err
-		}
-		t = mapBasic(s, pkg)
-	case "openapi":
-		s := &Oapi{}
-		err := yaml.NewDecoder(r).Decode(s)
-		if err != nil {
-			return gen.Template{}, err
-		}
-		t = mapOapi(s, pkg)
+	t, err := drivers[format](r)
+	if err != nil {
+		return gen.Template{}, err
 	}
+
+	t.Imports = UniqueImports(t.Imports)
+	t.PkgName = pkg
 
 	return t, nil
 }
 
-// Structure defines the default structure of a document
-type Structure struct {
-	Functions map[string]Function `yaml:"functions"`
-}
+// UniqueImports returns a slice of unique imports
+func UniqueImports(i []gen.Import) []gen.Import {
+	m := map[gen.Import]struct{}{}
+	for _, imp := range i {
+		if imp.Path == "" {
+			continue
+		}
+		m[imp] = struct{}{}
+	}
 
-// Function
-type Function struct {
-	Query  map[string]Fields `yaml:"query"`
-	Path   map[string]Fields `yaml:"path"`
-	Header map[string]Fields `yaml:"header"`
-	Body   Fields            `yaml:"body"`
-}
+	// convert map to slice
+	var s []gen.Import
+	for k := range m {
+		s = append(s, k)
+	}
 
-// Fields
-type Fields struct {
-	Type   string `yaml:"type"`
-	Import string `yaml:"import"`
+	return s
 }

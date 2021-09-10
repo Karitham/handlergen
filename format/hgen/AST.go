@@ -1,24 +1,33 @@
-package format
+package hgen
 
 import (
-	"log"
+	"io"
 
 	"github.com/Karitham/handlergen/gen"
+	"gopkg.in/yaml.v2"
 )
 
-func mapBasic(f *Structure, pkg string) gen.Template {
+func Parse(r io.Reader) (gen.Template, error) {
+	s := &Structure{}
+	err := yaml.NewDecoder(r).Decode(s)
+	if err != nil {
+		return gen.Template{}, err
+	}
+	return mapBasic(s), err
+}
+
+func mapBasic(f *Structure) gen.Template {
 	t := gen.Template{
 		Imports: []gen.Import{
 			{Path: "net/http"},
 		},
-		PkgName: pkg,
 	}
 
 	for name, fun := range f.Functions {
 		if fun.Body.Type != "" {
-			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "encoding/json"})
+			t.Imports = append(t.Imports, gen.Import{Path: "encoding/json"})
 			if fun.Body.Import != "" {
-				t.Imports = appendOnceImports(t.Imports, gen.Import{Path: fun.Body.Import})
+				t.Imports = append(t.Imports, gen.Import{Path: fun.Body.Import})
 			}
 		}
 
@@ -47,8 +56,7 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesQuery(t, p.Type),
 		})
 		if p.Import != "" {
-			log.Println(p.Import)
-			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
+			t.Imports = append(t.Imports, gen.Import{Path: p.Import})
 		}
 	}
 	for n, p := range f.Header {
@@ -57,7 +65,7 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesHeader(t, p.Type),
 		})
 		if p.Import != "" {
-			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
+			t.Imports = append(t.Imports, gen.Import{Path: p.Import})
 		}
 	}
 	for n, p := range f.Path {
@@ -66,7 +74,7 @@ func queryParamsFromQuery(t *gen.Template, f Function) []gen.QueryParam {
 			Type: parseTypesPath(t, p.Type),
 		})
 		if p.Import != "" {
-			t.Imports = appendOnceImports(t.Imports, gen.Import{Path: f.Body.Import})
+			t.Imports = append(t.Imports, gen.Import{Path: p.Import})
 		}
 	}
 	return q

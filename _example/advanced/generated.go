@@ -3,35 +3,50 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Karitham/handlergen/gen"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+
+	"github.com/Karitham/handlergen/gen"
+
+	"github.com/go-chi/chi/v5"
 )
+
+type errorHandler = func(w http.ResponseWriter, r *http.Request, err error)
+
+var defaultErrHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, "invalid payload", 400)
+}
 
 type Handlers interface {
 	example1(http.ResponseWriter, *http.Request, uint, gen.Template)
-	example2(http.ResponseWriter, *http.Request, string, uint, int, int)
+	example2(http.ResponseWriter, *http.Request, uint, int, int, string)
 	example3(http.ResponseWriter, *http.Request, int, int, string, string, int)
 }
 
-func Example1(h Handlers) http.HandlerFunc {
+func Example1(h Handlers, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPage := query.Get("page")
 		Page64, err := strconv.ParseUint(queryPage, 10, 64)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 		Page := uint(Page64)
 
 		var body gen.Template
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			http.Error(w, "invalid body", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
-
 		h.example1(
 			w,
 			r,
@@ -41,54 +56,74 @@ func Example1(h Handlers) http.HandlerFunc {
 	}
 }
 
-func Example2(h Handlers) http.HandlerFunc {
+func Example2(h Handlers, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		User := query.Get("user")
 		queryUserId := query.Get("user_id")
 		UserId64, err := strconv.ParseUint(queryUserId, 10, 64)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 		UserId := uint(UserId64)
 		queryPage := query.Get("page")
 		Page, err := strconv.Atoi(queryPage)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 		queryPerPage := query.Get("per_page")
 		PerPage, err := strconv.Atoi(queryPerPage)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
+		User := query.Get("user")
 
 		h.example2(
 			w,
 			r,
-			User,
 			UserId,
 			Page,
 			PerPage,
+			User,
 		)
 	}
 }
 
-func Example3(h Handlers) http.HandlerFunc {
+func Example3(h Handlers, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		queryPage := query.Get("page")
 		Page, err := strconv.Atoi(queryPage)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 		queryPerPage := query.Get("per_page")
 		PerPage, err := strconv.Atoi(queryPerPage)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 		User := query.Get("user")
@@ -96,7 +131,11 @@ func Example3(h Handlers) http.HandlerFunc {
 		queryUserId := chi.URLParam(r, "user_id")
 		UserId, err := strconv.Atoi(queryUserId)
 		if err != nil {
-			http.Error(w, "invalid query", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
 

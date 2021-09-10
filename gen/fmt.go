@@ -1,21 +1,18 @@
 package gen
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 
 	"mvdan.cc/gofumpt/format"
 )
 
 func Format(in io.Reader, out io.Writer) error {
-	b := &bytes.Buffer{}
-	_, err := io.Copy(b, in)
+	b, err := io.ReadAll(in)
 	if err != nil {
 		return err
 	}
 
-	res, err := format.Source(b.Bytes(), format.Options{
+	res, err := format.Source(b, format.Options{
 		LangVersion: "1.16",
 		ExtraRules:  true,
 	})
@@ -23,7 +20,6 @@ func Format(in io.Reader, out io.Writer) error {
 		return err
 	}
 
-	fmt.Fprint(out, string(res))
-
+	_, err = out.Write(res)
 	return err
 }

@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	bs := New()
-	s := &server{bs: bs}
+	store := New()
+	s := &server{bookStore: store}
 
 	r := chi.NewRouter()
 	r.Route("/book", func(r chi.Router) {
-		r.Get("/", GetBookByName(s))
-		r.Post("/", StoreBook(s))
+		r.Get("/", GetBookByName(s, Logger))
+		r.Post("/", StoreBook(s, Logger))
 	})
 
 	log.Println("server running on localhost:5555")
@@ -25,11 +25,14 @@ func main() {
 }
 
 type server struct {
-	bs BookStore
+	bookStore interface {
+		Store(Book) error
+		Get(string) (Book, error)
+	}
 }
 
 func (s *server) GetBookByName(w http.ResponseWriter, r *http.Request, name string) {
-	book, err := s.bs.Get(name)
+	book, err := s.bookStore.Get(name)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -38,7 +41,7 @@ func (s *server) GetBookByName(w http.ResponseWriter, r *http.Request, name stri
 }
 
 func (s *server) StoreBook(w http.ResponseWriter, r *http.Request, body Book) {
-	if err := s.bs.Store(body); err != nil {
+	if err := s.bookStore.Store(body); err != nil {
 		http.Error(w, "error processing book", http.StatusInternalServerError)
 		return
 	}

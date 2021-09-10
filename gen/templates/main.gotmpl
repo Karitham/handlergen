@@ -5,6 +5,12 @@ import (
 	{{range .Imports}}"{{.Path}}"	
 {{end}})
 
+type errorHandler = func(w http.ResponseWriter, r *http.Request, err error)
+
+var defaultErrHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	http.Error(w, "invalid payload", 400)
+}
+
 type {{ SnakeToCamel .PkgName }} interface {
 	{{ range .Functions }}
 	{{ .Name }}(http.ResponseWriter, *http.Request {{if .HasQueryParams }}
@@ -17,7 +23,7 @@ type {{ SnakeToCamel .PkgName }} interface {
 }
 
 {{ range .Functions }}
-func {{ SnakeToCamel .Name }}(h {{ SnakeToCamel $.PkgName }}) http.HandlerFunc {
+func {{ SnakeToCamel .Name }}(h {{ SnakeToCamel $.PkgName }}, errHandler ...errorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		{{ if .HasQueryParams -}} query := r.URL.Query()
 		{{ range .QueryParams -}}
@@ -31,21 +37,31 @@ func {{ SnakeToCamel .Name }}(h {{ SnakeToCamel $.PkgName }}) http.HandlerFunc {
 			{{ else if eq .Type "[]string" }}{{ template "[]string" . }}
 			{{ else if eq .Type "[]string_query" }}{{ template "[]string" . }}
 			{{ else if eq .Type "[]string_header" }}{{ template "[]string_header" . }}
-		{{- end -}}
+		{{ end -}}
 		{{- end }}
 		{{ end }}
 		{{ if .HasBody }}var body {{ .Body.Type }}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			http.Error(w, "invalid body", 400)
+			if errHandler == nil {
+				defaultErrHandler(w, r, err)
+				return
+			}
+			errHandler[0](w, r, err)
 			return
 		}
-		{{ end }}
+		{{ end -}}
+
 		h.{{ .Name }}(
 			w,
 			r,
-			{{ if .HasQueryParams }}{{ range .QueryParams }}{{ SnakeToCamel .Name }},
-			{{ end }}{{ end }}{{ if .HasBody }}body,
-	{{ end -}}
+			{{- if .HasQueryParams -}}
+				{{ range .QueryParams }}
+			{{ SnakeToCamel .Name }},
+				{{- end -}}
+			{{- end -}}
+			{{- if .HasBody }}
+			body,
+			{{- end }}
 		)
 	}
 }

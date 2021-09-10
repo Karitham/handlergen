@@ -1,10 +1,12 @@
-package format
+package openapi
 
 import (
+	"io"
 	"regexp"
 	"strings"
 
 	"github.com/Karitham/handlergen/gen"
+	"gopkg.in/yaml.v2"
 )
 
 type Oapi struct {
@@ -12,8 +14,18 @@ type Oapi struct {
 }
 
 type Route struct {
-	operationID string      `yaml:"operationId"`
-	Parameters  []Parameter `yaml:"parameters"`
+	operationID string `yaml:"operationId"`
+	RequestBody struct {
+		Content  map[string]DataType `json:"content"`
+		Required bool                `yaml:"required"`
+	} `yaml:"requestBody"`
+	Parameters []Parameter `yaml:"parameters"`
+}
+
+type DataType struct {
+	Schema struct {
+		Ref string `json:"$ref"`
+	} `json:"schema"`
 }
 
 type Parameter struct {
@@ -26,49 +38,40 @@ type Schema struct {
 	Type string `yaml:"type"`
 }
 
-func mapOapi(f *Oapi, pkg string) gen.Template {
+func Parse(r io.Reader) (gen.Template, error) {
+	s := &Oapi{}
+	err := yaml.NewDecoder(r).Decode(s)
+	if err != nil {
+		return gen.Template{}, err
+	}
 	t := gen.Template{
 		Imports: []gen.Import{
 			{Path: "net/http"},
 		},
-		PkgName: pkg,
 	}
 
-	for p, path := range f.Paths {
+	for p, path := range s.Paths {
 		for k, route := range path {
 			gf := gen.Function{
 				Name: formatOAPIName(k, p, route.operationID),
 			}
-			for _, param := range route.Parameters {
-				switch param.In {
-				case "query":
-					gf.QueryParams = append(gf.QueryParams, gen.QueryParam{
-						Name: param.Name,
-						Type: parseTypesQuery(&t, param.Schema.Type),
-					})
-				case "path":
-					gf.QueryParams = append(gf.QueryParams, gen.QueryParam{
-						Name: param.Name,
-						Type: parseTypesPath(&t, param.Schema.Type),
-					})
-				case "header":
-					gf.QueryParams = append(gf.QueryParams, gen.QueryParam{
-						Name: param.Name,
-						Type: parseTypesHeader(&t, param.Schema.Type),
-					})
-				case "body":
-					gf.Body = gen.Body{
-						Type: param.Schema.Type,
-					}
-					t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "encoding/json"})
-					if gf.Body.Type != "" {
-						t.Imports = appendOnceImports(t.Imports, gen.Import{Path: gf.Body.Type})
-					}
+
+			if route.RequestBody.Required {
+				for _, b := range route.RequestBody.Content {
+					b.Schema.Ref = strings.TrimPrefix(b.Schema.Ref, "#/definitions/")
 				}
+				gf.Body = gen.Body{
+					Type: "json.RawMessage",
+				}
+				t.Imports = append(t.Imports, gen.Import{Path: "encoding/json"})
 			}
+
+			for _, param := range route.Parameters {
+				parsers[param.In](&t, &gf, param)
+			}
+
 			gf.HasBody = gf.Body.Type != ""
 			gf.HasQueryParams = len(gf.QueryParams) > 0
-
 			if !gf.HasBody && !gf.HasQueryParams {
 				continue
 			}
@@ -77,7 +80,7 @@ func mapOapi(f *Oapi, pkg string) gen.Template {
 		}
 	}
 
-	return t
+	return t, err
 }
 
 var sanitizeRegex = regexp.MustCompile(`\{([\w\d]+)\}`)
@@ -99,12 +102,12 @@ func formatOAPIName(op, path, name string) string {
 }
 
 func parseTypesQuery(t *gen.Template, typ string) string {
+	t.Imports = append(t.Imports, gen.Import{Path: imports[typ]})
+
 	switch typ {
 	case "int", "integer":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strconv"})
 		return "int"
 	case "array":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strings"})
 		return "[]string"
 	case "string":
 		return "string"
@@ -113,14 +116,13 @@ func parseTypesQuery(t *gen.Template, typ string) string {
 }
 
 func parseTypesPath(t *gen.Template, typ string) string {
-	t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "github.com/go-chi/chi/v5"})
+	t.Imports = append(t.Imports, gen.Import{Path: "github.com/go-chi/chi/v5"})
+	t.Imports = append(t.Imports, gen.Import{Path: imports[typ]})
 
 	switch typ {
 	case "int", "integer":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strconv"})
 		return "int_query"
 	case "array":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strings"})
 		return "[]string_query"
 	case "string":
 		return "string_query"
@@ -129,27 +131,14 @@ func parseTypesPath(t *gen.Template, typ string) string {
 }
 
 func parseTypesHeader(t *gen.Template, typ string) string {
+	t.Imports = append(t.Imports, gen.Import{Path: imports[typ]})
 	switch typ {
 	case "int", "integer":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strconv"})
 		return "int_header"
 	case "array":
-		t.Imports = appendOnceImports(t.Imports, gen.Import{Path: "strings"})
 		return "[]string_header"
 	case "string":
 		return "string_header"
 	}
 	return typ
-}
-
-func appendOnceImports(imps []gen.Import, i ...gen.Import) []gen.Import {
-	for _, s := range imps {
-		for _, j := range i {
-			if s == j {
-				continue
-			}
-			imps = append(imps, j)
-		}
-	}
-	return imps
 }
