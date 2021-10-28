@@ -1,10 +1,16 @@
 
 # HandlerGen
 
+## Notice
+
+If you happen to stumble on this, it is barely functional, and unmaintained.
+My effort goes in favor of <https://github.com/discord-gophers/goapi-gen>, which fullfills my goals and ideas, and has more traction.
+
+## Description
+
 A go net/http HandlerFunc code generator.
 Parses all your args and give them to you as function arguments,
 which you can then validate and use.
-
 
 ## Features
 
@@ -26,6 +32,7 @@ Install Handlergen with the go toolchain
 ```bash 
 go install github.com/Karitham/handlergen@latest
 ```
+
 ## Usage/Examples
 
 Describe the function you want
@@ -60,9 +67,6 @@ handlergen -file _example/basic/basic.yaml > _example/basic/generated.go
 
 - [@Karitham](https://www.github.com/Karitham)
 
-  
 ## License
 
 [ISC](https://choosealicense.com/licenses/isc/)
-
-  
